@@ -1,0 +1,32 @@
+{
+  "name": "resume_demo",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc -b && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@element-plus/icons-vue": "^2.3.1",
+    "@vueuse/core": "^10.9.0",
+    "autoprefixer": "^10.4.18",
+    "element-plus": "^2.9.7",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^2.5.2",
+    "pinia": "^2.1.7",
+    "pinia-plugin-persistedstate": "^4.2.0",
+    "postcss": "^8.4.35",
+    "tailwindcss": "^3.4.1",
+    "vue": "^3.4.21",
+    "vuedraggable": "^4.1.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.4",
+    "@vue/tsconfig": "^0.7.0",
+    "typescript": "~5.3.3",
+    "vite": "^5.1.4",
+    "vue-tsc": "^2.0.6"
+  }
+}
