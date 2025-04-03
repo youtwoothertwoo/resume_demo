@@ -83,8 +83,8 @@ import ProjectsSection from './sections/ProjectsSection.vue';
 import ModernTemplate from './templates/ModernTemplate.vue';
 import ClassicTemplate from './templates/ClassicTemplate.vue';
 import MinimalTemplate from './templates/MinimalTemplate.vue';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
+import { API_ENDPOINTS } from '../config/api';
+
 
 const resumeStore = useResumeStore();
 const themeStore = useThemeStore();
@@ -122,101 +122,71 @@ function isSectionVisible(section: string): boolean {
   return section in sectionComponents;
 }
 
-// 导出简历为 PDF
-const exportResume = async () => {
-  const element = document.getElementById('resume-print')
-  if (!element) return
-
+// 导出简历
+async function exportResume() {
   try {
-    // 添加加载提示
-    ElMessage.info('正在生成 PDF，请稍候...')
-    
-    // 等待组件渲染完成
-    await nextTick()
-    
-    // 创建一个临时的容器用于导出
-    const container = document.createElement('div')
-    container.style.position = 'fixed'
-    container.style.left = '1px'
-    container.style.top = '1px'
+    const element = document.querySelector('#resume-print');
+    if (!element) {
+      ElMessage.error('未找到简历模板');
+      return;
+    }
 
-    container.style.width = '210mm'
-    container.style.height = '297mm'
-    container.style.backgroundColor = '#ffffff'
-    container.style.zIndex = '-9999'
-    
-    // 克隆原始元素到临时容器
-    const clone = element.cloneNode(true) as HTMLElement
-    container.appendChild(clone)
-    document.body.appendChild(container)
-    
-    // 设置克隆元素的样式
-    clone.style.width = '100%'
-    clone.style.height = '100%'
-    clone.style.position = 'relative'
-    clone.style.display = 'block'
-    clone.style.visibility = 'visible'
-    clone.style.opacity = '1'
+    ElMessage.info('正在生成PDF，请稍候...');
 
- 
-    
-    
-    // 使用 html2canvas 捕获内容
-    const canvas = await html2canvas(container, {
-      scale: 2,
-      useCORS: true,
-      logging: true,
-      backgroundColor: '#ffffff',
-      removeContainer: true,
-      foreignObjectRendering: true,
-      allowTaint: true,
-      width: 210 * 3.78, // A4 宽度（毫米转换为像素）
-      height: 297 * 3.78, // A4 高度（毫米转换为像素）
-      onclone: (clonedDoc: Document) => {
-        const clonedElement = clonedDoc.querySelector('#resume-print') as HTMLElement
-        if (clonedElement) {
-          clonedElement.style.width = '100%'
-          clonedElement.style.height = '100%'
-          clonedElement.style.position = 'relative'
-          clonedElement.style.display = 'block'
-          clonedElement.style.visibility = 'visible'
-          clonedElement.style.opacity = '1'
-          
+    // 收集所有样式表
+    const styles = Array.from(document.styleSheets)
+      .map(sheet => {
+        try {
+          return Array.from(sheet.cssRules)
+            .map(rule => rule.cssText)
+            .join('\n');
+        } catch (e) {
+          console.warn('无法读取样式表:', e);
+          return '';
         }
-      }
-    })
+      })
+      .join('\n');
+
+    // 创建完整的HTML
+    const html = `
+      <html>
+        <head>
+          <style>${styles}</style>
+        </head>
+        <body>
+          ${element.outerHTML}
+        </body>
+      </html>
+    `;
+
+    // 发送到服务器生成PDF
+    const response = await fetch(API_ENDPOINTS.EXPORT_PDF, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ html })
+    });
+
+    if (!response.ok) {
+      throw new Error('PDF生成失败');
+    }
+
+    // 下载PDF
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `resume_${new Date().toISOString().slice(0, 10)}.pdf`;
+    a.click();
+
+    // 清理URL对象
+    window.URL.revokeObjectURL(url);
     
-    // 创建 PDF
-    const pdf = new jsPDF({
-      orientation: 'portrait',
-      unit: 'mm',
-      format: 'a4'
-    })
-    
-    // 计算缩放比例以适应 A4 纸
-    const imgWidth = 210 // A4 宽度
-    const imgHeight = (canvas.height * imgWidth) / canvas.width
-    
-    // 添加图片到 PDF
-    pdf.addImage(
-      canvas.toDataURL('image/jpeg', 1.0),
-      'JPEG',
-      0,
-      0,
-      imgWidth,
-      imgHeight
-    )
-    
-    // 保存 PDF
-    pdf.save('resume.pdf')
-    
-    // 移除临时容器
-    document.body.removeChild(container)
-    
-    ElMessage.success('PDF 导出成功')
+    ElMessage.success('PDF导出成功');
   } catch (error) {
-    console.error('PDF 导出失败:', error)
-    ElMessage.error('PDF 导出失败，请重试')
+    console.error('导出失败:', error);
+    ElMessage.error('导出失败，请重试');
   }
 }
 

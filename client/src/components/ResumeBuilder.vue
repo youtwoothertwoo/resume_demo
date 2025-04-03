@@ -47,9 +47,8 @@
     <!-- Preview -->
     <div class="flex-shrink-0 h-full overflow-y-auto bg-gray-100 dark:bg-gray-900 border-l border-gray-200 dark:border-gray-700">
       <div class="p-8">
-        <div class="bg-white dark:bg-gray-800 shadow-lg">
+        <div id="resume-print" class="bg-white dark:bg-gray-800 shadow-lg">
           <component
-            id="resume-print"
             :is="getCurrentTemplate"
             :resume-data="resumeData"
           />
@@ -74,6 +73,7 @@ import ProjectsSection from './sections/ProjectsSection.vue';
 import ModernTemplate from './templates/ModernTemplate.vue';
 import ClassicTemplate from './templates/ClassicTemplate.vue';
 import MinimalTemplate from './templates/MinimalTemplate.vue';
+import { API_ENDPOINTS } from '../config/api';
 
 const resumeStore = useResumeStore();
 const themeStore = useThemeStore();
@@ -112,16 +112,65 @@ function isSectionVisible(section: string): boolean {
 // 导出简历
 async function exportResume() {
   try {
-    // 这里可以根据需要添加不同的导出格式选项
     const element = document.querySelector('#resume-print');
     if (!element) {
       ElMessage.error('未找到简历模板');
       return;
     }
 
-    // 这里先用简单的打印功能代替
-    window.print();
-    ElMessage.success('正在准备打印...');
+    ElMessage.info('正在生成PDF，请稍候...');
+
+    // 收集所有样式表
+    const styles = Array.from(document.styleSheets)
+      .map(sheet => {
+        try {
+          return Array.from(sheet.cssRules)
+            .map(rule => rule.cssText)
+            .join('\n');
+        } catch (e) {
+          console.warn('无法读取样式表:', e);
+          return '';
+        }
+      })
+      .join('\n');
+
+    // 创建完整的HTML
+    const html = `
+      <html>
+        <head>
+          <style>${styles}</style>
+        </head>
+        <body>
+          ${element.outerHTML}
+        </body>
+      </html>
+    `;
+
+    // 发送到服务器生成PDF
+    const response = await fetch(API_ENDPOINTS.EXPORT_PDF, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ html })
+    });
+
+    if (!response.ok) {
+      throw new Error('PDF生成失败');
+    }
+
+    // 下载PDF
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `resume_${new Date().toISOString().slice(0, 10)}.pdf`;
+    a.click();
+
+    // 清理URL对象
+    window.URL.revokeObjectURL(url);
+    
+    ElMessage.success('PDF导出成功');
   } catch (error) {
     console.error('导出失败:', error);
     ElMessage.error('导出失败，请重试');

@@ -38,7 +38,8 @@ export interface Project {
   url: string;
   startDate: string;
   endDate: string;
-  keywords: string[];
+  technologies: string[];
+  highlights: string[];
 }
 
 export interface ResumeData {

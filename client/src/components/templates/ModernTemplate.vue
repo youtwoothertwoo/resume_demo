@@ -121,7 +121,7 @@
             <div v-for="(skill, index) in props.resumeData.skills" :key="index" 
                  class="p-3 rounded-lg ">
               <div class="flex items-center justify-between">
-                <h3 class="font-semibold text-gray-900 dark:text-white">{{ skill.name }}</h3>
+                <h3 >{{ skill.name }}</h3>
                 <span class="text-sm text-primary-600 dark:text-primary-400">{{ skill.level }}</span>
               </div>
               <div v-if="skill.keywords?.length" class="mt-2 flex flex-wrap gap-1.5">
