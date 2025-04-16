@@ -1,0 +1,23 @@
+@media print {
+
+    @page {
+        size: A4;
+        margin: 0;
+        padding: 0;
+      }
+      
+    
+      .minimal-template {
+        box-shadow: none !important;
+      }
+
+    .modern-template {
+      box-shadow: none !important;
+    }
+  
+    .header-gradient {
+      background: var(--theme-primary) !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+}
