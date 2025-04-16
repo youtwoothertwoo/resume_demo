@@ -164,8 +164,7 @@ function removeEducation(index: number) {
 }
 
 function handleReorder() {
-  // The v-model on draggable will automatically update the store
-  // No additional handling needed
+  
 }
 </script>
 
